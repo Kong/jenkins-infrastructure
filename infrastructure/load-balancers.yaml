@@ -19,6 +19,10 @@ Parameters:
     SecurityGroup:
         Description: Select the Security Group to apply to the Application Load Balancer
         Type: AWS::EC2::SecurityGroup::Id
+    
+    LoadBalancerCertificateArn:
+        Type: String
+        Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
 
 Resources:
 
@@ -37,11 +41,13 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::Listener
         Properties:
             LoadBalancerArn: !Ref LoadBalancer
-            Port: 80
-            Protocol: HTTP 
+            Port: 443
+            Protocol: HTTPS
             DefaultActions: 
                 - Type: forward
                   TargetGroupArn: !Ref DefaultTargetGroup
+            Certificates:
+                - CertificateArn: !Ref LoadBalancerCertificateArn
     
     # We define a default target group here, as this is a mandatory Parameters
     # when creating an Application Load Balancer Listener. This is not used, instead

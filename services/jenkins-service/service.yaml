@@ -1,5 +1,5 @@
 Description: >
-    This is an example of a long running ECS service that serves a JSON API of products.
+    Runs the Jenkins docker image
 
 Parameters: 
 
@@ -14,7 +14,7 @@ Parameters:
     DesiredCount: 
         Description: How many instances of this task should we run across our cluster?
         Type: Number
-        Default: 2
+        Default: 1
 
     Listener:
         Description: The Application Load Balancer listener to register with
@@ -23,7 +23,7 @@ Parameters:
     Path: 
         Description: The path to register with the Application Load Balancer
         Type: String
-        Default: /products
+        Default: '*'
 
 Resources:
 
@@ -36,21 +36,39 @@ Resources:
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers: 
-                - ContainerName: "product-service"
-                  ContainerPort: 8001
+                - ContainerName: "jenkins-service"
+                  ContainerPort: 8080
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: product-service
+            Family: jenkins-service
+            Volumes:
+                - Name: jenkins_home
             ContainerDefinitions:
-                - Name: product-service
+                - Name: s3-backup-cron
+                  MountPoints:
+                      - SourceVolume: jenkins_home
+                        ContainerPath: /data
                   Essential: true
-                  Image: 275396840892.dkr.ecr.us-east-1.amazonaws.com/ecs-refarch-cloudformation/product-service:1.0.0
-                  Memory: 128
+                  Image: mashape/jenkins-cron
+                  MemoryReservation: 512
+                  LogConfiguration:
+                    LogDriver: awslogs
+                    Options:
+                        awslogs-group: !Ref AWS::StackName
+                        awslogs-region: !Ref AWS::Region
+                - Name: jenkins-service
+                  MountPoints:
+                      - SourceVolume: jenkins_home
+                        ContainerPath: /var/jenkins_home
+                  Essential: true
+                  Image: mashape/jenkins:v0.2
+                  Cpu: 1024
+                  MemoryReservation: 2048
                   PortMappings:
-                    - ContainerPort: 8001
+                    - ContainerPort: 8080
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
@@ -72,7 +90,7 @@ Resources:
             Matcher: 
                 HttpCode: 200-299
             HealthCheckIntervalSeconds: 10
-            HealthCheckPath: /products
+            HealthCheckPath: /login
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
             HealthyThresholdCount: 2
@@ -81,7 +99,7 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !Ref Listener
-            Priority: 2
+            Priority: 1
             Conditions:
                 - Field: path-pattern
                   Values: 
