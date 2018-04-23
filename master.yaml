@@ -67,4 +67,7 @@ Resources:
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
-                Listener: !GetAtt ALB.Outputs.Listener 
+                Listener: !GetAtt ALB.Outputs.Listener
+                EnvironmentName: !Ref AWS::StackName
+                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup

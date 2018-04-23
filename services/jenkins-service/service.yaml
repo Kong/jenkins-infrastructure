@@ -25,11 +25,28 @@ Parameters:
         Type: String
         Default: '*'
 
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    PublicSubnets:
+        Description: Choose which subnets the Application Load Balancer should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select the Security Group to apply to the Application Load Balancer
+        Type: AWS::EC2::SecurityGroup::Id
+    
+    LoadBalancerCertificateArn:
+        Type: String
+        Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
+
 Resources:
 
     Service: 
         Type: AWS::ECS::Service
-        DependsOn: ListenerRule
+        DependsOn:
+            - ListenerRule
         Properties: 
             Cluster: !Ref Cluster
             Role: !Ref ServiceRole
@@ -39,6 +56,20 @@ Resources:
                 - ContainerName: "jenkins-service"
                   ContainerPort: 8080
                   TargetGroupArn: !Ref TargetGroup
+
+    ServiceV2: 
+        Type: AWS::ECS::Service
+        DependsOn:
+            - JenkinsMasterTargetGroup
+        Properties: 
+            Cluster: !Ref Cluster
+            Role: !Ref ServiceRole
+            DesiredCount: !Ref DesiredCount
+            TaskDefinition: !Ref TaskDefinition
+            LoadBalancers: 
+                - ContainerName: "jenkins-service"
+                  ContainerPort: 8080
+                  TargetGroupArn: !Ref JenkinsMasterTargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
@@ -107,6 +138,43 @@ Resources:
             Actions:
                 - TargetGroupArn: !Ref TargetGroup
                   Type: forward
+
+    JenkinsMasterLoadBalancer:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties:
+            Name: !Sub ${EnvironmentName}-V2
+            Subnets: !Ref PublicSubnets
+            SecurityGroups: 
+                - !Ref SecurityGroup
+            Tags: 
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+    JenkinsMasterLoadBalancerListener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        Properties:
+            LoadBalancerArn: !Ref JenkinsMasterLoadBalancer
+            Port: 443
+            Protocol: HTTPS
+            DefaultActions: 
+                - Type: forward
+                  TargetGroupArn: !Ref JenkinsMasterTargetGroup
+            Certificates:
+                - CertificateArn: !Ref LoadBalancerCertificateArn
+
+    JenkinsMasterTargetGroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties:
+            VpcId: !Ref VPC
+            Port: 80
+            Protocol: HTTP
+            Matcher: 
+                HttpCode: 200-299
+            HealthCheckIntervalSeconds: 10
+            HealthCheckPath: /login
+            HealthCheckProtocol: HTTP
+            HealthCheckTimeoutSeconds: 5
+            HealthyThresholdCount: 2
 
     # This IAM Role grants the service access to register/unregister with the 
     # Application Load Balancer (ALB). It is based on the default documented here:
