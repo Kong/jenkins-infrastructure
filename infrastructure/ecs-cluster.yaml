@@ -30,6 +30,18 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
 
+    LoadBalancerSubnets:
+        Description: Choose which subnets the Load Balancer should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    LoadBalancerSecurityGroup:
+        Description: Select the Security Group to apply to the Load Balancer
+        Type: AWS::EC2::SecurityGroup::Id
+
+    LoadBalancerCertificateArn:
+        Type: String
+        Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
+
 Mappings:
 
     # These are the latest ECS optimized AMIs as of Feb 2018:
@@ -90,6 +102,8 @@ Resources:
             MinSize: !Ref ClusterSize
             MaxSize: !Ref ClusterSize
             DesiredCapacity: !Ref ClusterSize
+            LoadBalancerNames:
+            - Ref: ECSLoadBalancer
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} ECS host
@@ -97,6 +111,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Timeout: PT15M
+        
         UpdatePolicy:
             AutoScalingRollingUpdate:
                 MinInstancesInService: 1
@@ -126,6 +141,28 @@ Resources:
                     /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
                     /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
                     /usr/bin/enable-ec2-spot-hibernation
+
+    ECSLoadBalancer:
+        Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Properties:
+            Subnets: !Ref LoadBalancerSubnets
+            SecurityGroups: 
+                - !Ref LoadBalancerSecurityGroup
+            Listeners:
+            - LoadBalancerPort: '443'
+              InstancePort: '8080'
+              Protocol: HTTPS
+              SSLCertificateId: !Ref LoadBalancerCertificateArn
+            - LoadBalancerPort: '50000'
+              InstancePort: '50000'
+              Protocol: HTTPS
+              SSLCertificateId: !Ref LoadBalancerCertificateArn
+            HealthCheck:
+                Target: HTTP:8080/login
+                HealthyThreshold: '3'
+                UnhealthyThreshold: '5'
+                Interval: '30'
+                Timeout: '5'
 
         Metadata:
             AWS::CloudFormation::Init:

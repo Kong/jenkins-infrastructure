@@ -51,6 +51,8 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                LoadBalancerSubnets: !GetAtt VPC.Outputs.PublicSubnets
+                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack

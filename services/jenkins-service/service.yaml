@@ -11,7 +11,7 @@ Parameters:
         Description: Please provide the ECS Cluster ID that this service should run on
         Type: String
 
-    DesiredCount: 
+    DesiredCount:
         Description: How many instances of this task should we run across our cluster?
         Type: Number
         Default: 1
@@ -69,6 +69,9 @@ Resources:
                   MemoryReservation: 2048
                   PortMappings:
                     - ContainerPort: 8080
+                      HostPort: 8080
+                    - ContainerPort: 50000
+                      HostPort: 50000
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
