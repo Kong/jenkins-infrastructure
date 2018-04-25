@@ -159,10 +159,10 @@ Resources:
               InstanceProtocol: TCP
             HealthCheck:
                 Target: HTTP:8080/login
-                HealthyThreshold: '3'
-                UnhealthyThreshold: '5'
+                HealthyThreshold: '1'
+                UnhealthyThreshold: '6'
                 Interval: '30'
-                Timeout: '5'
+                Timeout: '10'
 
         Metadata:
             AWS::CloudFormation::Init:
