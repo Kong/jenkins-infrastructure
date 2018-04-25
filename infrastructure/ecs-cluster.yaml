@@ -159,7 +159,7 @@ Resources:
               InstanceProtocol: TCP
             HealthCheck:
                 Target: HTTP:8080/login
-                HealthyThreshold: '1'
+                HealthyThreshold: '2'
                 UnhealthyThreshold: '6'
                 Interval: '30'
                 Timeout: '10'
