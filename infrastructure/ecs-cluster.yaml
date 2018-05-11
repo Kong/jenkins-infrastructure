@@ -142,7 +142,7 @@ Resources:
                     #!/bin/bash
                     DD_API_KEY=${DataDogApiKey} bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh)"
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=50m >> /etc/ecs/ecs.config
+                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=50m >> /etc/ecs/ecs.config
                     echo ECS_NUM_IMAGES_DELETE_PER_CYCLE=10 >> /etc/ecs/ecs.config
@@ -232,8 +232,8 @@ Resources:
               InstanceProtocol: TCP
             HealthCheck:
                 Target: HTTP:8080/login
-                HealthyThreshold: '2'
-                UnhealthyThreshold: '6'
+                HealthyThreshold: '3'
+                UnhealthyThreshold: '3'
                 Interval: '30'
                 Timeout: '10'
 
