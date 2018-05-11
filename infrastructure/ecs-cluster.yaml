@@ -42,6 +42,9 @@ Parameters:
         Type: String
         Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
 
+    DataDogApiKey:
+        Type: String
+
 Mappings:
 
     # These are the latest ECS optimized AMIs as of Feb 2018:
@@ -137,10 +140,11 @@ Resources:
             UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
+                    DD_API_KEY=${DataDogApiKey} bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh)"
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=30s >> /etc/ecs/ecs.config
+                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=50m >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
-                    echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=30m >> /etc/ecs/ecs.config
+                    echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=50m >> /etc/ecs/ecs.config
                     echo ECS_NUM_IMAGES_DELETE_PER_CYCLE=10 >> /etc/ecs/ecs.config
                     yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
                     yum install -y aws-cfn-bootstrap hibagent

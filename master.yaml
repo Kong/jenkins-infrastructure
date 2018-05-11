@@ -8,6 +8,10 @@ Description: >
     It then deploys a highly available ECS cluster using an AutoScaling Group, with 
     ECS hosts distributed across multiple Availability Zones. 
 
+Parameters:
+    DataDogApiKey:
+        Type: String
+
 Resources:
 
     VPC:
@@ -45,6 +49,7 @@ Resources:
         Properties:
             TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
             Parameters:
+                DataDogApiKey: !Ref DataDogApiKey
                 EnvironmentName: !Ref AWS::StackName
                 InstanceType: t2.large
                 ClusterSize: 3

@@ -33,6 +33,7 @@ Resources:
         Properties: 
             Cluster: !Ref Cluster
             Role: !Ref ServiceRole
+            HealthCheckGracePeriodSeconds: 600
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers: 
