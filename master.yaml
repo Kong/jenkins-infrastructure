@@ -11,6 +11,15 @@ Description: >
 Parameters:
     DataDogApiKey:
         Type: String
+        Default: ''
+    ClusterSize:
+        Description: How many ECS hosts do you want to initially deploy?
+        Type: Number
+        Default: 3
+    InstanceType:
+        Description: Which instance type should we use to build the ECS cluster?
+        Type: String
+        Default: t2.large
 
 Resources:
 
@@ -50,9 +59,9 @@ Resources:
             TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
             Parameters:
                 DataDogApiKey: !Ref DataDogApiKey
+                ClusterSize: !Ref ClusterSize
+                InstanceType: !Ref InstanceType
                 EnvironmentName: !Ref AWS::StackName
-                InstanceType: t2.large
-                ClusterSize: 3
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets

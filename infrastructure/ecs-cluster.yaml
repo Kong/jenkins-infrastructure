@@ -44,6 +44,7 @@ Parameters:
 
     DataDogApiKey:
         Type: String
+        Default: ''
 
 Mappings:
 
@@ -137,6 +138,11 @@ Resources:
             SecurityGroups:
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile
+            BlockDeviceMappings:
+              - DeviceName: "/dev/xvdcz"
+                Ebs:
+                  VolumeSize: "100"
+                  VolumeType: "gp2"
             UserData:
                 "Fn::Base64": !Sub |
                     #!/bin/bash
