@@ -13,6 +13,10 @@ Parameters:
         Type: AWS::EC2::VPC::Id
         Description: Choose which VPC the security groups should be deployed to
 
+    VPCCidr:
+        Type: String
+        Description: The VPC CIDR block
+
 Resources:
 
     # This security group defines who/where is allowed to access the ECS hosts directly.
@@ -47,6 +51,18 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
 
+    EFSMountTargetSecurityGroup:
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+        VpcId: !Ref VPC
+        GroupDescription: "Security group to allow inbound NFS for EFS mount target from ECS container instances"
+        SecurityGroupIngress:
+          -
+            IpProtocol: "tcp"
+            FromPort: "2049"
+            ToPort: "2049"
+            CidrIp: !Ref VPCCidr
+
 Outputs:
 
     ECSHostSecurityGroup: 
@@ -56,4 +72,8 @@ Outputs:
     LoadBalancerSecurityGroup:
         Description: A reference to the security group for load balancers
         Value: !Ref LoadBalancerSecurityGroup
+    
+    EFSMountTargetSecurityGroup:
+        Description: A reference to the security group for ECS hosts to access EFS
+        Value: !Ref EFSMountTargetSecurityGroup
 

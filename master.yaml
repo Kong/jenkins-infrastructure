@@ -15,11 +15,11 @@ Parameters:
     ClusterSize:
         Description: How many ECS hosts do you want to initially deploy?
         Type: Number
-        Default: 3
+        Default: 4
     InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
-        Default: t2.large
+        Default: t2.medium
 
 Resources:
 
@@ -42,6 +42,7 @@ Resources:
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                VPCCidr: !GetAtt VPC.Outputs.VPCCidr
 
     ALB:
         Type: AWS::CloudFormation::Stack
@@ -67,6 +68,7 @@ Resources:
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
                 LoadBalancerSubnets: !GetAtt VPC.Outputs.PublicSubnets
                 LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                EFSMountTargetSecurityGroup: !GetAtt SecurityGroups.Outputs.EFSMountTargetSecurityGroup
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack

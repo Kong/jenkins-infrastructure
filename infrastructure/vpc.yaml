@@ -203,6 +203,10 @@ Outputs:
     VPC: 
         Description: A reference to the created VPC
         Value: !Ref VPC
+    
+    VPCCidr:
+        Description: A reference to the VPC CIDR block
+        Value: !GetAtt VPC.CidrBlock
 
     PublicSubnets:
         Description: A list of the public subnets

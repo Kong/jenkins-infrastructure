@@ -33,9 +33,12 @@ Resources:
         Properties: 
             Cluster: !Ref Cluster
             Role: !Ref ServiceRole
-            HealthCheckGracePeriodSeconds: 600
+            HealthCheckGracePeriodSeconds: 30
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
+            PlacementStrategies:
+              - Type: spread
+                Field: host
             LoadBalancers: 
                 - ContainerName: "jenkins-service"
                   ContainerPort: 8080
@@ -46,27 +49,17 @@ Resources:
         Properties:
             Family: jenkins-service
             Volumes:
-                - Name: jenkins_home
+                -
+                  Host:
+                      SourcePath: /var/jenkins_home
+                  Name: jenkins_home
             ContainerDefinitions:
-                - Name: s3-backup-cron
-                  MountPoints:
-                      - SourceVolume: jenkins_home
-                        ContainerPath: /data
-                  Essential: true
-                  Image: mashape/jenkins-cron
-                  MemoryReservation: 512
-                  LogConfiguration:
-                    LogDriver: awslogs
-                    Options:
-                        awslogs-group: !Ref AWS::StackName
-                        awslogs-region: !Ref AWS::Region
-                        awslogs-stream-prefix: s3
                 - Name: jenkins-service
                   MountPoints:
                       - SourceVolume: jenkins_home
                         ContainerPath: /var/jenkins_home
                   Essential: true
-                  Image: mashape/jenkins:v0.2
+                  Image: mashape/jenkins:latest
                   Cpu: 1024
                   MemoryReservation: 2048
                   PortMappings:
