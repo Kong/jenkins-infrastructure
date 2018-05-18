@@ -177,13 +177,17 @@ Resources:
                     #!/bin/bash
                     yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
                     yum install -y aws-cfn-bootstrap hibagent
-                    yum install nfs-utils prcbind
+                    yum install -y nfs-utils prcbind
                     mkdir -p /var/jenkins_home
                     aws_az="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
                     echo "$aws_az.${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/jenkins_home   nfs4    defaults" >> /etc/fstab
                     mount -a
                     chmod -R 777 /var/jenkins_home
                     DD_API_KEY=${DataDogApiKey} bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh)"
+                    usermod -a -G docker dd-agent
+                    echo "ecs_agent_url: http://localhost:51678/" >> /etc/datadog-agent/datadog.yaml
+                    echo "collect_ec2_tags: true" >> /etc/datadog-agent/datadog.yaml
+                    cp /etc/datadog-agent/conf.d/docker.d/conf.yaml.example /etc/datadog-agent/conf.d/docker.d/conf.yaml
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
