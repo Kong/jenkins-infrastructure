@@ -124,6 +124,7 @@ Resources:
         SubnetId: !Select [ 1, !Ref Subnets]
 
     ECSAutoScalingGroup:
+        DependsOn: ECSCluster
         Type: AWS::AutoScaling::AutoScalingGroup
         Properties:
             VPCZoneIdentifier: !Ref Subnets
