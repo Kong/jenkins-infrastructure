@@ -86,3 +86,21 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 Listener: !GetAtt ALB.Outputs.Listener 
+
+    PrometheusService:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/services/prometheus-service/service.yaml
+            Parameters:
+                VPC: !GetAtt VPC.Outputs.VPC
+                Cluster: !GetAtt ECS.Outputs.Cluster
+                Listener: !GetAtt ALB.Outputs.Listener 
+
+    GrafanaService:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/services/grafana-service/service.yaml
+            Parameters:
+                VPC: !GetAtt VPC.Outputs.VPC
+                Cluster: !GetAtt ECS.Outputs.Cluster
+                Listener: !GetAtt ALB.Outputs.Listener 
