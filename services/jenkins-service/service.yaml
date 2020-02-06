@@ -25,6 +25,11 @@ Parameters:
         Type: String
         Default: '*'
 
+    JenkinsImage:
+        Description: The Jenkins docker image tag we want to run
+        Type: String
+        Default: mashape/jenkins:latest
+
 Resources:
 
     Service: 
@@ -59,7 +64,7 @@ Resources:
                       - SourceVolume: jenkins_home
                         ContainerPath: /var/jenkins_home
                   Essential: true
-                  Image: mashape/jenkins:latest
+                  Image: !Ref JenkinsImage
                   Cpu: 1024
                   MemoryReservation: 2048
                   PortMappings:

@@ -20,6 +20,10 @@ Parameters:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
         Default: t2.medium
+    JenkinsImage:
+        Description: The Jenkins docker image tag we want to run
+        Type: String
+        Default: mashape/jenkins:latest
 
 Resources:
 
@@ -83,6 +87,7 @@ Resources:
         Properties:
             TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/services/jenkins-service/service.yaml
             Parameters:
+                JenkinsImage: !Ref JenkinsImage
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 Listener: !GetAtt ALB.Outputs.Listener 
