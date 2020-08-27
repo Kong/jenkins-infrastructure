@@ -177,14 +177,14 @@ Resources:
                     mkdir -p /var/jenkins_home
                     aws_az="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
                     echo "$aws_az.${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/jenkins_home   nfs4    defaults" >> /etc/fstab
-                    mount -a
-                    chmod -R 777 /var/jenkins_home
+                    mount -av
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=50m >> /etc/ecs/ecs.config
                     echo ECS_NUM_IMAGES_DELETE_PER_CYCLE=10 >> /etc/ecs/ecs.config
                     /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+                    start ecs
                     /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
                     /usr/bin/enable-ec2-spot-hibernation
         Metadata:
