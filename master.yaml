@@ -9,9 +9,6 @@ Description: >
     ECS hosts distributed across multiple Availability Zones. 
 
 Parameters:
-    DataDogApiKey:
-        Type: String
-        Default: ''
     ClusterSize:
         Description: How many ECS hosts do you want to initially deploy?
         Type: Number
@@ -26,7 +23,6 @@ Parameters:
         Default: mashape/jenkins:latest
 
 Resources:
-
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
@@ -63,7 +59,6 @@ Resources:
         Properties:
             TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
             Parameters:
-                DataDogApiKey: !Ref DataDogApiKey
                 ClusterSize: !Ref ClusterSize
                 InstanceType: !Ref InstanceType
                 EnvironmentName: !Ref AWS::StackName
