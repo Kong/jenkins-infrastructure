@@ -46,10 +46,6 @@ Parameters:
         Type: String
         Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
 
-    DataDogApiKey:
-        Type: String
-        Default: ''
-
 Mappings:
 
     # These are the latest ECS optimized AMIs as of Feb 2018:
@@ -183,11 +179,6 @@ Resources:
                     echo "$aws_az.${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/jenkins_home   nfs4    defaults" >> /etc/fstab
                     mount -a
                     chmod -R 777 /var/jenkins_home
-                    DD_API_KEY=${DataDogApiKey} bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh)"
-                    usermod -a -G docker dd-agent
-                    echo "ecs_agent_url: http://localhost:51678/" >> /etc/datadog-agent/datadog.yaml
-                    echo "collect_ec2_tags: true" >> /etc/datadog-agent/datadog.yaml
-                    cp /etc/datadog-agent/conf.d/docker.d/conf.yaml.example /etc/datadog-agent/conf.d/docker.d/conf.yaml
                     echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
                     echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
                     echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
