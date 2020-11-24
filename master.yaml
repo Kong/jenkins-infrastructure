@@ -82,6 +82,7 @@ Resources:
         Properties:
             TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/services/jenkins-service/service.yaml
             Parameters:
+                EnvironmentName: !Ref AWS::StackName
                 JenkinsImage: !Ref JenkinsImage
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster

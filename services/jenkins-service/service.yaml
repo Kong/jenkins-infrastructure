@@ -3,6 +3,10 @@ Description: >
 
 Parameters: 
 
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+        
     VPC:
         Description: The VPC that the ECS cluster is deployed to
         Type: AWS::EC2::VPC::Id
@@ -45,21 +49,21 @@ Resources:
               - Type: spread
                 Field: host
             LoadBalancers: 
-                - ContainerName: "jenkins-service"
+                - ContainerName: !Sub ${EnvironmentName}-jenkins
                   ContainerPort: 8080
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: jenkins-service
+            Family: !Sub ${EnvironmentName}-jenkins
             Volumes:
                 -
                   Host:
                       SourcePath: /var/jenkins_home
                   Name: jenkins_home
             ContainerDefinitions:
-                - Name: jenkins-service
+                - Name: !Sub ${EnvironmentName}-jenkins
                   MountPoints:
                       - SourceVolume: jenkins_home
                         ContainerPath: /var/jenkins_home
