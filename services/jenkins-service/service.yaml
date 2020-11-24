@@ -3,6 +3,10 @@ Description: >
 
 Parameters: 
 
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
     VPC:
         Description: The VPC that the ECS cluster is deployed to
         Type: AWS::EC2::VPC::Id
@@ -34,7 +38,7 @@ Resources:
 
     Service: 
         Type: AWS::ECS::Service
-        DependsOn: ListenerRule
+        DependsOn: ListenerRule8080
         Properties: 
             Cluster: !Ref Cluster
             Role: !Ref ServiceRole
@@ -45,27 +49,26 @@ Resources:
               - Type: spread
                 Field: host
             LoadBalancers: 
-                - ContainerName: "jenkins-service"
+                - ContainerName: !Sub ${EnvironmentName}-jenkins
                   ContainerPort: 8080
-                  TargetGroupArn: !Ref TargetGroup
+                  TargetGroupArn: !Ref TargetGroup8080
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: jenkins-service
+            Family: !Sub ${EnvironmentName}-jenkins
             Volumes:
                 -
                   Host:
                       SourcePath: /var/jenkins_home
                   Name: jenkins_home
             ContainerDefinitions:
-                - Name: jenkins-service
+                - Name: !Sub ${EnvironmentName}-jenkins
                   MountPoints:
                       - SourceVolume: jenkins_home
                         ContainerPath: /var/jenkins_home
                   Essential: true
                   Image: !Ref JenkinsImage
-                  Cpu: 1024
                   MemoryReservation: 2048
                   PortMappings:
                     - ContainerPort: 8080
@@ -85,11 +88,11 @@ Resources:
             LogGroupName: !Ref AWS::StackName
             RetentionInDays: 365  
 
-    TargetGroup:
+    TargetGroup8080:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             VpcId: !Ref VPC
-            Port: 80
+            Port: 8080
             Protocol: HTTP
             Matcher: 
                 HttpCode: 200-299
@@ -99,7 +102,7 @@ Resources:
             HealthCheckTimeoutSeconds: 6
             HealthyThresholdCount: 2
     
-    ListenerRule:
+    ListenerRule8080:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !Ref Listener
@@ -109,13 +112,13 @@ Resources:
                   Values: 
                     - !Ref Path
             Actions:
-                - TargetGroupArn: !Ref TargetGroup
+                - TargetGroupArn: !Ref TargetGroup8080
                   Type: forward
 
     # This IAM Role grants the service access to register/unregister with the 
     # Application Load Balancer (ALB). It is based on the default documented here:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
-    ServiceRole: 
+    ServiceRole:
         Type: AWS::IAM::Role
         Properties: 
             RoleName: !Sub ecs-service-${AWS::StackName}
