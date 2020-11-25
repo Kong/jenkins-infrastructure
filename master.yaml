@@ -26,7 +26,7 @@ Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/vpc.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/infrastructure/vpc.yaml
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            10.180.0.0/16
@@ -38,7 +38,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/security-groups.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/infrastructure/security-groups.yaml
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -47,7 +47,7 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/load-balancers.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/infrastructure/load-balancers.yaml
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -57,7 +57,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/infrastructure/ecs-cluster.yaml
             Parameters:
                 ClusterSize: !Ref ClusterSize
                 InstanceType: !Ref InstanceType
@@ -72,7 +72,7 @@ Resources:
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/lifecyclehook.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/infrastructure/lifecyclehook.yaml
             Parameters:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
@@ -80,8 +80,9 @@ Resources:
     JenkinsService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/services/jenkins-service/service.yaml
+            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins-test/services/jenkins-service/service.yaml
             Parameters:
+                EnvironmentName: !Ref AWS::StackName
                 JenkinsImage: !Ref JenkinsImage
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
