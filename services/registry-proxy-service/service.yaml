@@ -25,10 +25,10 @@ Parameters:
         Type: String
         Default: '*'
 
-    JenkinsImage:
-        Description: The Jenkins docker image tag we want to run
+    RegistryImage:
+        Description: The Registry docker image tag we want to run
         Type: String
-        Default: mashape/jenkins:latest
+        Default: registry:latest
 
 Resources:
 
@@ -45,39 +45,39 @@ Resources:
               - Type: spread
                 Field: host
             LoadBalancers: 
-                - ContainerName: "jenkins-service"
-                  ContainerPort: 8080
+                - ContainerName: "registry-proxy-service"
+                  ContainerPort: 5000
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: jenkins-service
-            Volumes:
-                -
-                  Host:
-                      SourcePath: /var/jenkins_home
-                  Name: jenkins_home
+            Family: registry-proxy-service
+            #Volumes:
+            #    -
+            #      Host:
+            #          SourcePath: /var/jenkins_home
+            #      Name: jenkins_home
             ContainerDefinitions:
-                - Name: jenkins-service
-                  MountPoints:
-                      - SourceVolume: jenkins_home
-                        ContainerPath: /var/jenkins_home
+                - Name: registry-proxy-service
+            #      MountPoints:
+            #          - SourceVolume: jenkins_home
+            #            ContainerPath: /var/jenkins_home
                   Essential: true
-                  Image: !Ref JenkinsImage
+                  Image: !Ref RegistryImage
                   Cpu: 1024
                   MemoryReservation: 2048
                   PortMappings:
-                    - ContainerPort: 8080
-                      HostPort: 8080
-                    - ContainerPort: 50000
-                      HostPort: 50000
+                    - ContainerPort: 443
+                      HostPort: 5000
+                    - ContainerPort: 5000
+                      HostPort: 5000
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
                         awslogs-group: !Ref CloudWatchLogsGroup
                         awslogs-region: !Ref AWS::Region
-                        awslogs-stream-prefix: jenkins
+                        awslogs-stream-prefix: registry-proxy
     
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
