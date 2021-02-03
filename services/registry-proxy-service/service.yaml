@@ -89,12 +89,12 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             VpcId: !Ref VPC
-            Port: 80
+            Port: 5000
             Protocol: HTTP
             Matcher: 
                 HttpCode: 200-299
             HealthCheckIntervalSeconds: 20
-            HealthCheckPath: /login
+            HealthCheckPath: /v2
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 6
             HealthyThresholdCount: 2
