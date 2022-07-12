@@ -22,7 +22,7 @@ Parameters:
     
     LoadBalancerCertificateArn:
         Type: String
-        Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
+        Default: 'arn:aws:acm:us-east-1:116245082724:certificate/9d74bcf6-bdab-4c08-8b01-b728324c4531'
 
 Resources:
 

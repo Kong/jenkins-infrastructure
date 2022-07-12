@@ -32,7 +32,7 @@ Parameters:
     JenkinsImage:
         Description: The Jenkins docker image tag we want to run
         Type: String
-        Default: mashape/jenkins:latest
+        Default: mashape/jenkins:v2
 
 Resources:
 

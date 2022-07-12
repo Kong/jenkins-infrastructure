@@ -44,7 +44,7 @@ Parameters:
 
     LoadBalancerCertificateArn:
         Type: String
-        Default: 'arn:aws:acm:us-east-1:151743893450:certificate/4e2017af-9197-46e0-83bf-49b910d37366'
+        Default: 'arn:aws:acm:us-east-1:116245082724:certificate/9d74bcf6-bdab-4c08-8b01-b728324c4531'
 
     ECSAMI:
         Description: ECS-Optimized AMI ID
@@ -119,7 +119,7 @@ Resources:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
             ImageId: !Ref ECSAMI
-            KeyName: 'mashape_shared'
+            KeyName: 'jenkins'
             InstanceType: !Ref InstanceType
             SecurityGroups:
                 - !Ref SecurityGroup
@@ -363,7 +363,7 @@ Resources:
                                 "ec2:TerminateInstances",
                                 "ec2:StopInstances"
                             ],
-                            "Resource": "arn:aws:ec2:us-east-1:151743893450:instance/*",
+                            "Resource": "arn:aws:ec2:us-east-1:116245082724:instance/*",
                             "Condition": {
                                 "StringEquals": {
                                     "ec2:ResourceTag/Name": "Packer Builder"
