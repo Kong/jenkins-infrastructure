@@ -154,3 +154,25 @@ Resources:
                                 "Resource": "*"
                         }]
                     }
+
+    JenkinsWorkerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: jenkins-worker-instance-profile
+        Description: The workers use the instance profile associated with this role to give permissions to the worker
+        Path: '/'
+        AssumeRolePolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: ec2.amazonaws.com
+              Action: 'sts:AssumeRole'
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+
+    JenkinsWorkerInstanceProfile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        Path: /
+        Roles:
+          - !Ref JenkinsWorkerRole
