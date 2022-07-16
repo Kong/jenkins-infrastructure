@@ -39,7 +39,6 @@ Resources:
       Type: AWS::EC2::SecurityGroupIngress
       Properties:
         GroupId: !Ref ECSHostSecurityGroup
-        GroupDescription: Self referential group rule to allow the Jenkins workers to talk with the controller
         IpProtocol: -1
         SourceSecurityGroupId: !Ref ECSHostSecurityGroup
 

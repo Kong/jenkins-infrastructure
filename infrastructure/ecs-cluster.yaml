@@ -401,7 +401,7 @@ Resources:
                                 "ec2:StartInstances",
                                 "ec2:StopInstances",
                                 "ec2:TerminateInstances",
-                                "iam:PassRole",
+                                "iam:PassRole"
                       
                             ],
                             "Resource": "*"
