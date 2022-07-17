@@ -33,7 +33,7 @@ Resources:
                   IpProtocol: -1
             Tags:
                 - Key: Name
-                  Value: !Sub ${EnvironmentName}-ECS-Hosts
+                  Value: !Sub ${EnvironmentName}-ECSHosts
 
     ECSHostSecurityGroupIngress:
       Type: AWS::EC2::SecurityGroupIngress
@@ -70,6 +70,9 @@ Resources:
             FromPort: "2049"
             ToPort: "2049"
             CidrIp: !Ref VPCCidr
+        Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName}-EFSVolums
 
 Outputs:
 
