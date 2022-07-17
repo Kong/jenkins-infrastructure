@@ -1,456 +1,455 @@
 Description: >
-    This template deploys an ECS cluster to the provided VPC and subnets
-    using an Auto Scaling Group
+  This template deploys an ECS cluster to the provided VPC and subnets
+  using an Auto Scaling Group
 
 Parameters:
 
-    EnvironmentName:
-        Description: An environment name that will be prefixed to resource names
-        Type: String
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
 
-    InstanceType:
-        Description: Which instance type should we use to build the ECS cluster?
-        Type: String
-        Default: t2.medium
+  InstanceType:
+    Description: Which instance type should we use to build the ECS cluster?
+    Type: String
+    Default: t2.medium
 
-    ClusterSize:
-        Description: How many ECS hosts do you want to initially deploy?
-        Type: Number
-        Default: 3
+  ClusterSize:
+    Description: How many ECS hosts do you want to initially deploy?
+    Type: Number
+    Default: 3
 
-    VPC:
-        Description: Choose which VPC this ECS cluster should be deployed to
-        Type: AWS::EC2::VPC::Id
+  VPC:
+    Description: Choose which VPC this ECS cluster should be deployed to
+    Type: AWS::EC2::VPC::Id
 
-    Subnets:
-        Description: Choose which subnets this ECS cluster should be deployed to
-        Type: List<AWS::EC2::Subnet::Id>
+  Subnets:
+    Description: Choose which subnets this ECS cluster should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
 
-    SecurityGroup:
-        Description: Select the Security Group to use for the ECS cluster hosts
-        Type: AWS::EC2::SecurityGroup::Id
+  SecurityGroup:
+    Description: Select the Security Group to use for the ECS cluster hosts
+    Type: AWS::EC2::SecurityGroup::Id
 
-    EFSMountTargetSecurityGroup:
-        Description: Select the Security Group to use for the ECS cluster hosts to access EFS
-        Type: AWS::EC2::SecurityGroup::Id
+  EFSMountTargetSecurityGroup:
+    Description: Select the Security Group to use for the ECS cluster hosts to access EFS
+    Type: AWS::EC2::SecurityGroup::Id
 
-    LoadBalancerSubnets:
-        Description: Choose which subnets the Load Balancer should be deployed to
-        Type: List<AWS::EC2::Subnet::Id>
+  LoadBalancerSubnets:
+    Description: Choose which subnets the Load Balancer should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
 
-    LoadBalancerSecurityGroup:
-        Description: Select the Security Group to apply to the Load Balancer
-        Type: AWS::EC2::SecurityGroup::Id
+  LoadBalancerSecurityGroup:
+    Description: Select the Security Group to apply to the Load Balancer
+    Type: AWS::EC2::SecurityGroup::Id
 
-    LoadBalancerCertificateArn:
-        Type: String
-        Default: 'arn:aws:acm:us-east-1:116245082724:certificate/9d74bcf6-bdab-4c08-8b01-b728324c4531'
+  LoadBalancerCertificateArn:
+    Type: String
+    Default: 'arn:aws:acm:us-east-1:116245082724:certificate/9d74bcf6-bdab-4c08-8b01-b728324c4531'
 
-    ECSAMI:
-        Description: ECS-Optimized AMI ID
-        Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-        Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
+  ECSAMI:
+    Description: ECS-Optimized AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux/recommended/image_id
 
 Resources:
 
-    ECSCluster:
-        Type: AWS::ECS::Cluster
-        Properties:
-            ClusterName: !Ref EnvironmentName
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref EnvironmentName
 
-    EFSFileSystem:
-      Type: "AWS::EFS::FileSystem"
-      Properties:
-        FileSystemTags:
-          -
-            Key: "Name"
-            Value: !Ref ECSCluster
-        PerformanceMode: "generalPurpose"
+  EFSFileSystem:
+    Type: "AWS::EFS::FileSystem"
+    Properties:
+      FileSystemTags:
+      - Key: "Name"
+        Value: !Ref ECSCluster
+      PerformanceMode: "generalPurpose"
 
-    EFSMountTarget0:
-      Type: "AWS::EFS::MountTarget"
-      Properties:
-        FileSystemId: !Ref EFSFileSystem
-        SecurityGroups:
-          - !Ref EFSMountTargetSecurityGroup
-        SubnetId: !Select [ 0, !Ref Subnets]
+  EFSMountTarget0:
+    Type: "AWS::EFS::MountTarget"
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SecurityGroups:
+      - !Ref EFSMountTargetSecurityGroup
+      SubnetId: !Select [ 0, !Ref Subnets ]
 
-    EFSMountTarget1:
-      Type: "AWS::EFS::MountTarget"
-      Properties:
-        FileSystemId: !Ref EFSFileSystem
-        SecurityGroups:
-          - !Ref EFSMountTargetSecurityGroup
-        SubnetId: !Select [ 1, !Ref Subnets]
+  EFSMountTarget1:
+    Type: "AWS::EFS::MountTarget"
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SecurityGroups:
+      - !Ref EFSMountTargetSecurityGroup
+      SubnetId: !Select [ 1, !Ref Subnets ]
 
-    ECSAutoScalingGroup:
-        DependsOn: ECSCluster
-        Type: AWS::AutoScaling::AutoScalingGroup
-        Properties:
-            VPCZoneIdentifier: !Ref Subnets
-            LaunchConfigurationName: !Ref ECSLaunchConfiguration
-            MinSize: !Ref ClusterSize
-            MaxSize: !Ref ClusterSize
-            DesiredCapacity: !Ref ClusterSize
-            LoadBalancerNames:
-            - Ref: ECSLoadBalancer
-            Tags:
-                - Key: Name
-                  Value: !Sub ${EnvironmentName} ECS host
-                  PropagateAtLaunch: true
-        CreationPolicy:
-            ResourceSignal:
-                Timeout: PT15M
+  ECSAutoScalingGroup:
+    DependsOn: ECSCluster
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !Ref Subnets
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      MinSize: !Ref ClusterSize
+      MaxSize: !Ref ClusterSize
+      DesiredCapacity: !Ref ClusterSize
+      LoadBalancerNames:
+      - Ref: ECSLoadBalancer
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvironmentName} ECS host
+        PropagateAtLaunch: true
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
 
-        UpdatePolicy:
-            AutoScalingRollingUpdate:
-                MinInstancesInService: 1
-                MaxBatchSize: 1
-                PauseTime: PT15M
-                SuspendProcesses:
-                  - HealthCheck
-                  - ReplaceUnhealthy
-                  - AZRebalance
-                  - AlarmNotification
-                  - ScheduledActions
-                WaitOnResourceSignals: true
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 1
+        MaxBatchSize: 1
+        PauseTime: PT15M
+        SuspendProcesses:
+        - HealthCheck
+        - ReplaceUnhealthy
+        - AZRebalance
+        - AlarmNotification
+        - ScheduledActions
+        WaitOnResourceSignals: true
 
-    ECSLaunchConfiguration:
-        Type: AWS::AutoScaling::LaunchConfiguration
-        Properties:
-            ImageId: !Ref ECSAMI
-            KeyName: 'jenkins'
-            InstanceType: !Ref InstanceType
-            SecurityGroups:
-                - !Ref SecurityGroup
-            IamInstanceProfile: !Ref ECSInstanceProfile
-            BlockDeviceMappings:
-              - DeviceName: "/dev/xvdcz"
-                Ebs:
-                  VolumeSize: "100"
-                  VolumeType: "gp2"
-            UserData:
-                "Fn::Base64": !Sub |
-                    #!/bin/bash
-                    yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-                    yum install -y aws-cfn-bootstrap hibagent
-                    yum install -y nfs-utils prcbind
-                    mkdir -p /var/jenkins_home
-                    aws_az="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
-                    echo "$aws_az.${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/jenkins_home   nfs4    defaults" >> /etc/fstab
-                    mount -av
-                    echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
-                    echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
-                    echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=50m >> /etc/ecs/ecs.config
-                    echo ECS_NUM_IMAGES_DELETE_PER_CYCLE=10 >> /etc/ecs/ecs.config
-                    /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-                    start ecs
-                    /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
-                    /usr/bin/enable-ec2-spot-hibernation
-        Metadata:
-            AWS::CloudFormation::Init:
-                config:
-                    packages:
-                        yum:
-                            awslogs: []
-                    commands:
-                        01_add_instance_to_cluster:
-                            command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    files:
-                        "/etc/cfn/cfn-hup.conf":
-                            mode: 000400
-                            owner: root
-                            group: root
-                            content: !Sub |
-                                [main]
-                                stack=${AWS::StackId}
-                                region=${AWS::Region}
-                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-                            content: !Sub |
-                                [cfn-auto-reloader-hook]
-                                triggers=post.update
-                                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
-                                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-                        "/etc/awslogs/awscli.conf":
-                            content: !Sub |
-                                [plugins]
-                                cwlogs = cwlogs
-                                [default]
-                                region = ${AWS::Region}
-                        "/etc/awslogs/awslogs.conf":
-                            content: !Sub |
-                                [general]
-                                state_file = /var/lib/awslogs/agent-state
-                                [/var/log/dmesg]
-                                file = /var/log/dmesg
-                                log_group_name = ${ECSCluster}-/var/log/dmesg
-                                log_stream_name = ${ECSCluster}
-                                [/var/log/messages]
-                                file = /var/log/messages
-                                log_group_name = ${ECSCluster}-/var/log/messages
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %b %d %H:%M:%S
-                                [/var/log/docker]
-                                file = /var/log/docker
-                                log_group_name = ${ECSCluster}-/var/log/docker
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%S.%f
-                                [/var/log/ecs/ecs-init.log]
-                                file = /var/log/ecs/ecs-init.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
-                                [/var/log/ecs/ecs-agent.log]
-                                file = /var/log/ecs/ecs-agent.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
-                                [/var/log/ecs/audit.log]
-                                file = /var/log/ecs/audit.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
+  ECSLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref ECSAMI
+      KeyName: 'jenkins'
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+      - !Ref SecurityGroup
+      IamInstanceProfile: !Ref ECSInstanceProfile
+      BlockDeviceMappings:
+      - DeviceName: "/dev/xvdcz"
+        Ebs:
+          VolumeSize: "100"
+          VolumeType: "gp2"
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+          yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+          yum install -y aws-cfn-bootstrap hibagent
+          yum install -y nfs-utils prcbind
+          mkdir -p /var/jenkins_home
+          aws_az="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+          echo "$aws_az.${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/    /var/jenkins_home   nfs4    defaults" >> /etc/fstab
+          mount -av
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=10m >> /etc/ecs/ecs.config
+          echo ECS_IMAGE_CLEANUP_INTERVAL=30s >> /etc/ecs/ecs.config
+          echo ECS_IMAGE_MINIMUM_CLEANUP_AGE=50m >> /etc/ecs/ecs.config
+          echo ECS_NUM_IMAGES_DELETE_PER_CYCLE=10 >> /etc/ecs/ecs.config
+          /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+          start ecs
+          /opt/aws/bin/cfn-signal -e $? --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSAutoScalingGroup
+          /usr/bin/enable-ec2-spot-hibernation
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              awslogs: [ ]
+          commands:
+            01_add_instance_to_cluster:
+              command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              mode: 000400
+              owner: root
+              group: root
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+            "/etc/awslogs/awscli.conf":
+              content: !Sub |
+                [plugins]
+                cwlogs = cwlogs
+                [default]
+                region = ${AWS::Region}
+            "/etc/awslogs/awslogs.conf":
+              content: !Sub |
+                [general]
+                state_file = /var/lib/awslogs/agent-state
+                [/var/log/dmesg]
+                file = /var/log/dmesg
+                log_group_name = ${ECSCluster}-/var/log/dmesg
+                log_stream_name = ${ECSCluster}
+                [/var/log/messages]
+                file = /var/log/messages
+                log_group_name = ${ECSCluster}-/var/log/messages
+                log_stream_name = ${ECSCluster}
+                datetime_format = %b %d %H:%M:%S
+                [/var/log/docker]
+                file = /var/log/docker
+                log_group_name = ${ECSCluster}-/var/log/docker
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%S.%f
+                [/var/log/ecs/ecs-init.log]
+                file = /var/log/ecs/ecs-init.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
+                [/var/log/ecs/ecs-agent.log]
+                file = /var/log/ecs/ecs-agent.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
+                [/var/log/ecs/audit.log]
+                file = /var/log/ecs/audit.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
 
-    ECSLoadBalancer:
-        Type: AWS::ElasticLoadBalancing::LoadBalancer
-        Properties:
-            Subnets: !Ref LoadBalancerSubnets
-            SecurityGroups:
-                - !Ref LoadBalancerSecurityGroup
-            Listeners:
-            - LoadBalancerPort: '443'
-              InstancePort: '8080'
-              Protocol: HTTPS
-              SSLCertificateId: !Ref LoadBalancerCertificateArn
-            - LoadBalancerPort: '50000'
-              InstancePort: '50000'
-              Protocol: TCP
-              InstanceProtocol: TCP
-            HealthCheck:
-                Target: HTTP:8080/login
-                HealthyThreshold: '3'
-                UnhealthyThreshold: '3'
-                Interval: '15'
-                Timeout: '12'
+  ECSLoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets: !Ref LoadBalancerSubnets
+      SecurityGroups:
+      - !Ref LoadBalancerSecurityGroup
+      Listeners:
+      - LoadBalancerPort: '443'
+        InstancePort: '8080'
+        Protocol: HTTPS
+        SSLCertificateId: !Ref LoadBalancerCertificateArn
+      - LoadBalancerPort: '50000'
+        InstancePort: '50000'
+        Protocol: TCP
+        InstanceProtocol: TCP
+      HealthCheck:
+        Target: HTTP:8080/login
+        HealthyThreshold: '3'
+        UnhealthyThreshold: '3'
+        Interval: '15'
+        Timeout: '12'
 
-        Metadata:
-            AWS::CloudFormation::Init:
-                config:
-                    packages:
-                        yum:
-                            awslogs: []
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              awslogs: [ ]
 
-                    commands:
-                        01_add_instance_to_cluster:
-                            command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-                    files:
-                        "/etc/cfn/cfn-hup.conf":
-                            mode: 000400
-                            owner: root
-                            group: root
-                            content: !Sub |
-                                [main]
-                                stack=${AWS::StackId}
-                                region=${AWS::Region}
+          commands:
+            01_add_instance_to_cluster:
+              command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          files:
+            "/etc/cfn/cfn-hup.conf":
+              mode: 000400
+              owner: root
+              group: root
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
 
-                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-                            content: !Sub |
-                                [cfn-auto-reloader-hook]
-                                triggers=post.update
-                                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
-                                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
+            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
 
-                        "/etc/awslogs/awscli.conf":
-                            content: !Sub |
-                                [plugins]
-                                cwlogs = cwlogs
-                                [default]
-                                region = ${AWS::Region}
+            "/etc/awslogs/awscli.conf":
+              content: !Sub |
+                [plugins]
+                cwlogs = cwlogs
+                [default]
+                region = ${AWS::Region}
 
-                        "/etc/awslogs/awslogs.conf":
-                            content: !Sub |
-                                [general]
-                                state_file = /var/lib/awslogs/agent-state
+            "/etc/awslogs/awslogs.conf":
+              content: !Sub |
+                [general]
+                state_file = /var/lib/awslogs/agent-state
+                
+                [/var/log/dmesg]
+                file = /var/log/dmesg
+                log_group_name = ${ECSCluster}-/var/log/dmesg
+                log_stream_name = ${ECSCluster}
+                
+                [/var/log/messages]
+                file = /var/log/messages
+                log_group_name = ${ECSCluster}-/var/log/messages
+                log_stream_name = ${ECSCluster}
+                datetime_format = %b %d %H:%M:%S
+                
+                [/var/log/docker]
+                file = /var/log/docker
+                log_group_name = ${ECSCluster}-/var/log/docker
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%S.%f
+                
+                [/var/log/ecs/ecs-init.log]
+                file = /var/log/ecs/ecs-init.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
+                
+                [/var/log/ecs/ecs-agent.log]
+                file = /var/log/ecs/ecs-agent.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
+                
+                [/var/log/ecs/audit.log]
+                file = /var/log/ecs/audit.log.*
+                log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
+                log_stream_name = ${ECSCluster}
+                datetime_format = %Y-%m-%dT%H:%M:%SZ
 
-                                [/var/log/dmesg]
-                                file = /var/log/dmesg
-                                log_group_name = ${ECSCluster}-/var/log/dmesg
-                                log_stream_name = ${ECSCluster}
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: true
+                ensureRunning: true
+                files:
+                - /etc/cfn/cfn-hup.conf
+                - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+              awslogs:
+                enabled: true
+                ensureRunning: true
+                files:
+                - /etc/awslogs/awslogs.conf
+                - /etc/awslogs/awscli.conf
 
-                                [/var/log/messages]
-                                file = /var/log/messages
-                                log_group_name = ${ECSCluster}-/var/log/messages
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %b %d %H:%M:%S
+  ECSServiceLinkedRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    Properties:
+      AWSServiceName: spot.amazonaws.com
 
-                                [/var/log/docker]
-                                file = /var/log/docker
-                                log_group_name = ${ECSCluster}-/var/log/docker
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%S.%f
+  # This IAM Role is attached to all of the ECS hosts. It is based on the default role
+  # published here:
+  # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
+  #
+  # You can add other IAM policy statements here to allow access from your ECS hosts
+  # to other AWS services. Please note that this role will be used by ALL containers
+  # running on the ECS host.
 
-                                [/var/log/ecs/ecs-init.log]
-                                file = /var/log/ecs/ecs-init.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
-
-                                [/var/log/ecs/ecs-agent.log]
-                                file = /var/log/ecs/ecs-agent.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
-
-                                [/var/log/ecs/audit.log]
-                                file = /var/log/ecs/audit.log.*
-                                log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
-                                log_stream_name = ${ECSCluster}
-                                datetime_format = %Y-%m-%dT%H:%M:%SZ
-
-                    services:
-                        sysvinit:
-                            cfn-hup:
-                                enabled: true
-                                ensureRunning: true
-                                files:
-                                    - /etc/cfn/cfn-hup.conf
-                                    - /etc/cfn/hooks.d/cfn-auto-reloader.conf
-                            awslogs:
-                                enabled: true
-                                ensureRunning: true
-                                files:
-                                    - /etc/awslogs/awslogs.conf
-                                    - /etc/awslogs/awscli.conf
-
-    ECSServiceLinkedRole:
-        Type: AWS::IAM::ServiceLinkedRole
-        Properties:
-            AWSServiceName: spot.amazonaws.com
-
-    # This IAM Role is attached to all of the ECS hosts. It is based on the default role
-    # published here:
-    # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html
-    #
-    # You can add other IAM policy statements here to allow access from your ECS hosts
-    # to other AWS services. Please note that this role will be used by ALL containers
-    # running on the ECS host.
-
-    ECSRole:
-        Type: AWS::IAM::Role
-        Properties:
-            Path: /
-            RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
-            AssumeRolePolicyDocument: |
-                {
-                    "Statement": [{
-                        "Action": "sts:AssumeRole",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": "ec2.amazonaws.com"
-                        }
-                    }]
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
+      AssumeRolePolicyDocument: |
+        {
+            "Statement": [{
+                "Action": "sts:AssumeRole",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "ec2.amazonaws.com"
                 }
-            ManagedPolicyArns:
-                - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-                - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
-                - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
-            Policies:
-                - PolicyName: jenkins-service
-                  PolicyDocument: |
-                    {
-                        "Statement": [{
-                            "Effect": "Allow",
-                            "Action": [
-                                "ec2:CopyImage",
-                                "ec2:CreateImage",
-                                "ec2:RebootInstances",
-                                "ec2:TerminateInstances",
-                                "ec2:StopInstances"
-                            ],
-                            "Resource": "arn:aws:ec2:us-east-1:116245082724:instance/*",
-                            "Condition": {
-                                "StringEquals": {
-                                    "ec2:ResourceTag/Name": "Packer Builder"
-                                }
-                            }
-                        },
-                        {
-                            "Effect": "Allow",
-                            "Action": [
-                                "ec2:AuthorizeSecurityGroupIngress",
-                                "ec2:CancelSpotFleetRequests",
-                                "ec2:CancelSpotInstanceRequests",
-                                "ec2:CopyImage",
-                                "ec2:CreateImage",
-                                "ec2:CreateKeyPair",
-                                "ec2:CreateSecurityGroup",
-                                "ec2:CreateTags",
-                                "ec2:DeleteKeyPair",
-                                "ec2:DeleteSnapshot",
-                                "ec2:DeleteTags",
-                                "ec2:DeregisterImage",
-                                "ec2:Describe*",
-                                "ec2:GetConsoleOutput",
-                                "ec2:ImportKeyPair",
-                                "ec2:ModifySpotFleetRequest",
-                                "ec2:RequestSpotFleet",
-                                "ec2:RequestSpotInstances",
-                                "ec2:RunInstances",
-                                "ec2:RunInstances",
-                                "ec2:StartInstances",
-                                "ec2:StopInstances",
-                                "ec2:TerminateInstances",
-                                "iam:PassRole"
-                      
-                            ],
-                            "Resource": "*"
-                        }]
-                    }
+            }]
+        }
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+      Policies:
+      - PolicyName: jenkins-service
+        PolicyDocument: |
+          {
+              "Statement": [{
+                  "Effect": "Allow",
+                  "Action": [
+                      "ec2:CopyImage",
+                      "ec2:CreateImage",
+                      "ec2:RebootInstances",
+                      "ec2:TerminateInstances",
+                      "ec2:StopInstances"
+                  ],
+                  "Resource": "arn:aws:ec2:us-east-1:116245082724:instance/*",
+                  "Condition": {
+                      "StringEquals": {
+                          "ec2:ResourceTag/Name": "Packer Builder"
+                      }
+                  }
+              },
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "ec2:AuthorizeSecurityGroupIngress",
+                      "ec2:CancelSpotFleetRequests",
+                      "ec2:CancelSpotInstanceRequests",
+                      "ec2:CopyImage",
+                      "ec2:CreateImage",
+                      "ec2:CreateKeyPair",
+                      "ec2:CreateSecurityGroup",
+                      "ec2:CreateTags",
+                      "ec2:DeleteKeyPair",
+                      "ec2:DeleteSnapshot",
+                      "ec2:DeleteTags",
+                      "ec2:DeregisterImage",
+                      "ec2:Describe*",
+                      "ec2:GetConsoleOutput",
+                      "ec2:ImportKeyPair",
+                      "ec2:ModifySpotFleetRequest",
+                      "ec2:RequestSpotFleet",
+                      "ec2:RequestSpotInstances",
+                      "ec2:RunInstances",
+                      "ec2:RunInstances",
+                      "ec2:StartInstances",
+                      "ec2:StopInstances",
+                      "ec2:TerminateInstances",
+                      "iam:PassRole"
+          
+                  ],
+                  "Resource": "*"
+              }]
+          }
 
-    ECSInstanceProfile:
-        Type: AWS::IAM::InstanceProfile
-        Properties:
-            Path: /
-            Roles:
-                - !Ref ECSRole
+  ECSInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref ECSRole
 
-    ECSServiceAutoScalingRole:
-        Type: AWS::IAM::Role
-        Properties:
-            AssumeRolePolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                    Action:
-                    - 'sts:AssumeRole'
-                    Effect: Allow
-                    Principal:
-                        Service:
-                        - application-autoscaling.amazonaws.com
-            Path: /
-            Policies:
-            - PolicyName: ecs-service-autoscaling
-              PolicyDocument:
-                  Statement:
-                      Effect: Allow
-                      Action:
-                      - application-autoscaling:*
-                      - cloudwatch:DescribeAlarms
-                      - cloudwatch:PutMetricAlarm
-                      - ecs:DescribeServices
-                      - ecs:UpdateService
-                      Resource: "*"
+  ECSServiceAutoScalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Action:
+          - 'sts:AssumeRole'
+          Effect: Allow
+          Principal:
+            Service:
+            - application-autoscaling.amazonaws.com
+      Path: /
+      Policies:
+      - PolicyName: ecs-service-autoscaling
+        PolicyDocument:
+          Statement:
+            Effect: Allow
+            Action:
+            - application-autoscaling:*
+            - cloudwatch:DescribeAlarms
+            - cloudwatch:PutMetricAlarm
+            - ecs:DescribeServices
+            - ecs:UpdateService
+            Resource: "*"
 
 Outputs:
 
-    Cluster:
-        Description: A reference to the ECS cluster
-        Value: !Ref ECSCluster
+  Cluster:
+    Description: A reference to the ECS cluster
+    Value: !Ref ECSCluster
 
-    ECSServiceAutoScalingRole:
-        Description: A reference to ECS service auto scaling role
-        Value: !GetAtt ECSServiceAutoScalingRole.Arn
+  ECSServiceAutoScalingRole:
+    Description: A reference to ECS service auto scaling role
+    Value: !GetAtt ECSServiceAutoScalingRole.Arn
 
-    ECSAutoScalingGroupName:
-        Description: A reference to ECS AutoScaling Group Name
-        Value: !Ref ECSAutoScalingGroup
+  ECSAutoScalingGroupName:
+    Description: A reference to ECS AutoScaling Group Name
+    Value: !Ref ECSAutoScalingGroup
