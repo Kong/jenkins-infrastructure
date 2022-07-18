@@ -101,8 +101,8 @@ Resources:
       HealthCheckPath: /login
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 8
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 10
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 5
 
   ListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule

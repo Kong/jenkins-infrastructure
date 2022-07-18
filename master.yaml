@@ -72,7 +72,7 @@ Resources:
   LifecycleHook:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/lifecyclehook.yaml
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/lifecycle-hook.yaml
       Parameters:
         Cluster: !GetAtt ECS.Outputs.Cluster
         ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
@@ -83,7 +83,7 @@ Resources:
       TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/services/jenkins-service/service.yaml
       Parameters:
         EnvironmentName: !Ref AWS::StackName
-        JenkinsImage: !Ref JenkinsImage
         VPC: !GetAtt VPC.Outputs.VPC
         Cluster: !GetAtt ECS.Outputs.Cluster
         Listener: !GetAtt ALB.Outputs.Listener
+        JenkinsImage: !Ref JenkinsImage
