@@ -34,18 +34,6 @@ Parameters:
     Description: Select the Security Group to use for the ECS cluster hosts to access EFS
     Type: AWS::EC2::SecurityGroup::Id
 
-  LoadBalancerSubnets:
-    Description: Choose which subnets the Load Balancer should be deployed to
-    Type: List<AWS::EC2::Subnet::Id>
-
-  LoadBalancerSecurityGroup:
-    Description: Select the Security Group to apply to the Load Balancer
-    Type: AWS::EC2::SecurityGroup::Id
-
-  LoadBalancerCertificateArn:
-    Type: String
-    Default: 'arn:aws:acm:us-east-1:116245082724:certificate/9d74bcf6-bdab-4c08-8b01-b728324c4531'
-
   ECSAMI:
     Description: ECS-Optimized AMI ID
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
@@ -91,8 +79,6 @@ Resources:
       MinSize: !Ref ClusterSize
       MaxSize: !Ref ClusterSize
       DesiredCapacity: !Ref ClusterSize
-      LoadBalancerNames:
-      - Ref: ECSLoadBalancer
       Tags:
       - Key: Name
         Value: !Sub ${EnvironmentName} ECS host
@@ -181,96 +167,6 @@ Resources:
               content: !Sub |
                 [general]
                 state_file = /var/lib/awslogs/agent-state
-                [/var/log/dmesg]
-                file = /var/log/dmesg
-                log_group_name = ${ECSCluster}-/var/log/dmesg
-                log_stream_name = ${ECSCluster}
-                [/var/log/messages]
-                file = /var/log/messages
-                log_group_name = ${ECSCluster}-/var/log/messages
-                log_stream_name = ${ECSCluster}
-                datetime_format = %b %d %H:%M:%S
-                [/var/log/docker]
-                file = /var/log/docker
-                log_group_name = ${ECSCluster}-/var/log/docker
-                log_stream_name = ${ECSCluster}
-                datetime_format = %Y-%m-%dT%H:%M:%S.%f
-                [/var/log/ecs/ecs-init.log]
-                file = /var/log/ecs/ecs-init.log.*
-                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-init.log
-                log_stream_name = ${ECSCluster}
-                datetime_format = %Y-%m-%dT%H:%M:%SZ
-                [/var/log/ecs/ecs-agent.log]
-                file = /var/log/ecs/ecs-agent.log.*
-                log_group_name = ${ECSCluster}-/var/log/ecs/ecs-agent.log
-                log_stream_name = ${ECSCluster}
-                datetime_format = %Y-%m-%dT%H:%M:%SZ
-                [/var/log/ecs/audit.log]
-                file = /var/log/ecs/audit.log.*
-                log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
-                log_stream_name = ${ECSCluster}
-                datetime_format = %Y-%m-%dT%H:%M:%SZ
-
-  ECSLoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      Subnets: !Ref LoadBalancerSubnets
-      SecurityGroups:
-      - !Ref LoadBalancerSecurityGroup
-      Listeners:
-      - LoadBalancerPort: '443'
-        InstancePort: '8080'
-        Protocol: HTTPS
-        SSLCertificateId: !Ref LoadBalancerCertificateArn
-      - LoadBalancerPort: '50000'
-        InstancePort: '50000'
-        Protocol: TCP
-        InstanceProtocol: TCP
-      HealthCheck:
-        Target: HTTP:8080/login
-        HealthyThreshold: '3'
-        UnhealthyThreshold: '3'
-        Interval: '15'
-        Timeout: '12'
-
-    Metadata:
-      AWS::CloudFormation::Init:
-        config:
-          packages:
-            yum:
-              awslogs: [ ]
-
-          commands:
-            01_add_instance_to_cluster:
-              command: !Sub echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
-          files:
-            "/etc/cfn/cfn-hup.conf":
-              mode: 000400
-              owner: root
-              group: root
-              content: !Sub |
-                [main]
-                stack=${AWS::StackId}
-                region=${AWS::Region}
-
-            "/etc/cfn/hooks.d/cfn-auto-reloader.conf":
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration
-
-            "/etc/awslogs/awscli.conf":
-              content: !Sub |
-                [plugins]
-                cwlogs = cwlogs
-                [default]
-                region = ${AWS::Region}
-
-            "/etc/awslogs/awslogs.conf":
-              content: !Sub |
-                [general]
-                state_file = /var/lib/awslogs/agent-state
                 
                 [/var/log/dmesg]
                 file = /var/log/dmesg
@@ -306,7 +202,6 @@ Resources:
                 log_group_name = ${ECSCluster}-/var/log/ecs/audit.log
                 log_stream_name = ${ECSCluster}
                 datetime_format = %Y-%m-%dT%H:%M:%SZ
-
           services:
             sysvinit:
               cfn-hup:
