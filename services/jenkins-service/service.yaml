@@ -158,7 +158,7 @@ Resources:
   JenkinsWorkerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: jenkins-worker-instance-profile
+      RoleName: !Sub ${AWS::StackName}-JenkinsWorkerRole
       Description: The workers use the instance profile associated with this role to give permissions to the worker
       Path: '/'
       AssumeRolePolicyDocument:

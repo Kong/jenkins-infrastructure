@@ -29,11 +29,11 @@ Resources:
       TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/vpc.yaml
       Parameters:
         EnvironmentName: !Ref AWS::StackName
-        VpcCIDR: 10.180.0.0/16
-        PublicSubnet1CIDR: 10.180.8.0/21
-        PublicSubnet2CIDR: 10.180.16.0/21
-        PrivateSubnet1CIDR: 10.180.24.0/21
-        PrivateSubnet2CIDR: 10.180.32.0/21
+        VpcCIDR: 10.182.0.0/16
+        PublicSubnet1CIDR: 10.182.8.0/21
+        PublicSubnet2CIDR: 10.182.16.0/21
+        PrivateSubnet1CIDR: 10.182.24.0/21
+        PrivateSubnet2CIDR: 10.182.32.0/21
 
   SecurityGroups:
     Type: AWS::CloudFormation::Stack
@@ -65,8 +65,6 @@ Resources:
         VPC: !GetAtt VPC.Outputs.VPC
         SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
         Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-        LoadBalancerSubnets: !GetAtt VPC.Outputs.PublicSubnets
-        LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
         EFSMountTargetSecurityGroup: !GetAtt SecurityGroups.Outputs.EFSMountTargetSecurityGroup
 
   LifecycleHook:
