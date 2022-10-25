@@ -1,88 +1,87 @@
 Description: >
-
-    This template deploys a VPC, with a pair of public and private subnets spread 
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
-    and default routes for them in the private subnets.
-
-    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
-    ECS hosts distributed across multiple Availability Zones. 
+  
+  This template deploys a VPC, with a pair of public and private subnets spread 
+  across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+  route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+  and default routes for them in the private subnets.
+  
+  It then deploys a highly available ECS cluster using an AutoScaling Group, with 
+  ECS hosts distributed across multiple Availability Zones. 
 
 Parameters:
-    ClusterSize:
-        Description: How many ECS hosts do you want to initially deploy?
-        Type: Number
-        Default: 4
-    InstanceType:
-        Description: Which instance type should we use to build the ECS cluster?
-        Type: String
-        Default: t2.medium
-    JenkinsImage:
-        Description: The Jenkins docker image tag we want to run
-        Type: String
-        Default: mashape/jenkins:latest
+  ClusterSize:
+    Description: How many ECS hosts do you want to initially deploy?
+    Type: Number
+    Default: 4
+  InstanceType:
+    Description: Which instance type should we use to build the ECS cluster?
+    Type: String
+    Default: t2.medium
+  JenkinsImage:
+    Description: The Jenkins docker image tag we want to run
+    Type: String
+    Default: mashape/jenkins:latest
 
 Resources:
-    VPC:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/vpc.yaml
-            Parameters:
-                EnvironmentName:    !Ref AWS::StackName
-                VpcCIDR:            10.180.0.0/16
-                PublicSubnet1CIDR:  10.180.8.0/21
-                PublicSubnet2CIDR:  10.180.16.0/21
-                PrivateSubnet1CIDR: 10.180.24.0/21
-                PrivateSubnet2CIDR: 10.180.32.0/21
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/vpc.yaml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        VpcCIDR: 10.182.0.0/16
+        PublicSubnet1CIDR: 10.182.8.0/21
+        PublicSubnet2CIDR: 10.182.16.0/21
+        PrivateSubnet1CIDR: 10.182.24.0/21
+        PrivateSubnet2CIDR: 10.182.32.0/21
 
-    SecurityGroups:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/security-groups.yaml
-            Parameters: 
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                VPCCidr: !GetAtt VPC.Outputs.VPCCidr
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/security-groups.yaml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        VPC: !GetAtt VPC.Outputs.VPC
+        VPCCidr: !GetAtt VPC.Outputs.VPCCidr
 
-    ALB:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/load-balancers.yaml
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+  ALB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/load-balancers.yaml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        VPC: !GetAtt VPC.Outputs.VPC
+        Subnets: !GetAtt VPC.Outputs.PublicSubnets
+        SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 
-    ECS:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
-            Parameters:
-                ClusterSize: !Ref ClusterSize
-                InstanceType: !Ref InstanceType
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-                LoadBalancerSubnets: !GetAtt VPC.Outputs.PublicSubnets
-                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
-                EFSMountTargetSecurityGroup: !GetAtt SecurityGroups.Outputs.EFSMountTargetSecurityGroup
+  ECS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/ecs-cluster.yaml
+      Parameters:
+        ClusterSize: !Ref ClusterSize
+        InstanceType: !Ref InstanceType
+        EnvironmentName: !Ref AWS::StackName
+        VPC: !GetAtt VPC.Outputs.VPC
+        SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+        Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+        EFSMountTargetSecurityGroup: !GetAtt SecurityGroups.Outputs.EFSMountTargetSecurityGroup
 
-    LifecycleHook:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/infrastructure/lifecyclehook.yaml
-            Parameters:
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
+  LifecycleHook:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/infrastructure/lifecycle-hook.yaml
+      Parameters:
+        Cluster: !GetAtt ECS.Outputs.Cluster
+        ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
 
-    JenkinsService:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: https://s3.amazonaws.com/aws-ecs-jenkins/services/jenkins-service/service.yaml
-            Parameters:
-                JenkinsImage: !Ref JenkinsImage
-                VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                Listener: !GetAtt ALB.Outputs.Listener 
+  JenkinsService:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/kong-aws-ecs-jenkins/services/jenkins-service/service.yaml
+      Parameters:
+        EnvironmentName: !Ref AWS::StackName
+        VPC: !GetAtt VPC.Outputs.VPC
+        Cluster: !GetAtt ECS.Outputs.Cluster
+        Listener: !GetAtt ALB.Outputs.Listener
+        JenkinsImage: !Ref JenkinsImage

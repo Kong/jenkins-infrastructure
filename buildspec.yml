@@ -8,16 +8,16 @@ env:
 
 phases:
 
-  pre_build: 
+  pre_build:
     commands:
 
-      # Validate all of the CloudFormation templates
-      - chmod a+x ./tests/validate-templates.sh
-      - ./tests/validate-templates.sh
+    # Validate all of the CloudFormation templates
+    - chmod a+x ./tests/validate-templates.sh
+    - ./tests/validate-templates.sh
 
   build:
     commands:
 
-      # Sync the templates
-      # - aws s3 sync . s3://${S3_BUCKET}
+    # Sync the templates
+    # - aws s3 sync . s3://${S3_BUCKET}
 
