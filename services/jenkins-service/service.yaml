@@ -32,7 +32,7 @@ Parameters:
   JenkinsImage:
     Description: The Jenkins docker image tag we want to run
     Type: String
-    Default: mashape/jenkins:v2
+    Default: kong/jenkins:1.0.5
 
 Resources:
 
@@ -68,8 +68,8 @@ Resources:
           ContainerPath: /var/jenkins_home
         Essential: true
         Image: !Ref JenkinsImage
-        Cpu: 1024
-        MemoryReservation: 2048
+        Cpu: 2048
+        MemoryReservation: 4096
         PortMappings:
         - ContainerPort: 8080
           HostPort: 8080
@@ -101,8 +101,8 @@ Resources:
       HealthCheckPath: /login
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 8
-      HealthyThresholdCount: 5
-      UnhealthyThresholdCount: 5
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 10
 
   ListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
