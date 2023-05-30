@@ -1,3 +1,5 @@
+🚧 This was a repository housing a packer configuration which used Jenkins to build AWS EC2 AMIs for use as jenkins workers. With the deprecation/removal of Jenkins [KAG-1361](https://konghq.atlassian.net/browse/KAG-1361), this repo is no longer needed. 🚧
+
 # Amazon ECS, AWS CloudFormation, and an Application Load Balancer for Jenkins
 
 This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
